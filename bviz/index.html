@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <meta http-equiv="refresh" content="10">
+    <style>
+        body {
+            padding:0;
+            margin:0
+        }
+    </style>
+</head>
+<body>
+
+    <canvas></canvas>
+    <script>
+
+        const robotPosition = [10, 10]
+
+        const blockers = {
+            '0:0':null,
+            '10:0':null
+        }
+
+        const path = {
+            
+        }
+
+        const visits = {
+
+        }
+
+        const colours = {
+            blockers:{background:'black', text:'white'},
+            path:{background:'green', text:'black'},
+            visits:{background:'orange', text:'black'},
+            robot:{background:'red', text:'white'},
+        }
+
+        const n = 100;
+
+        const canvas = document.querySelector('canvas');
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const leftShift = 120;
+        const topShift = 0;
+        const BOXDIMENSIONS = window.innerHeight / n
+        const foundDimensions = window.innerHeight
+        
+        ctx.fillRect( leftShift, topShift, window.innerHeight, window.innerHeight )
+        
+        const midN = Math.floor(n/2)
+        const minI = robotPosition[0] - midN
+        const minJ = robotPosition[1] - midN
+
+        let exactMidPoint;
+
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                let shifteI = minI + i
+                let shifteJ = minJ + j
+                let id = shifteI+":"+shifteJ
+                let bcolor;
+                let tcolor;
+                if (shifteI===0 && shifteJ===0) {
+                        // exactMidPoint = {
+                        //     x:i*BOXDIMENSIONS + leftShift + BOXDIMENSIONS/2, 
+                        //     y:j*BOXDIMENSIONS + topShift
+                        // }
+                    }
+                if (shifteI==robotPosition[0] && shifteJ==robotPosition[1]) {
+                    bcolor = colours.robot.background;
+                    tcolor = colours.robot.text;
+                    exactMidPoint = {
+                            x:i*BOXDIMENSIONS + leftShift + BOXDIMENSIONS/2, 
+                            y:j*BOXDIMENSIONS + topShift + BOXDIMENSIONS/2
+                        }
+                }
+                else if (blockers.hasOwnProperty(id)) {
+                    bcolor = colours.blockers.background;
+                    tcolor = colours.blockers.text;
+                }
+                else if (visits.hasOwnProperty(id)) {
+                    bcolor = colours.visits.background;
+                    tcolor = colours.visits.text;
+                }
+                else if (path.hasOwnProperty(id)) {
+                    bcolor = colours.path.background;
+                    tcolor = colours.path.text;
+                }else if (shifteI===0 || shifteJ===0) {
+    
+                    bcolor = "#ddd";
+                }
+                else {
+                    bcolor = 'white'
+                    tcolor = 'black'
+                }
+                // ctx.fillStyle = tcolor;
+                // ctx.fillText(id, i*BOXDIMENSIONS + leftShift, j*BOXDIMENSIONS + topShift);
+                ctx.fillStyle = bcolor;
+                ctx.fillRect( i*BOXDIMENSIONS + leftShift, j*BOXDIMENSIONS + topShift, BOXDIMENSIONS, BOXDIMENSIONS )
+            }   
+        }
+
+
+        let trueIRange = n*2
+        ctx.fillStyle = "#000";
+        ctx.font = "18px Arial";
+        canvas.onmousemove = function(e) {
+            let x = e.clientX
+            let y = e.clientY
+            if (x < leftShift) return;
+            if (x > (leftShift + foundDimensions)) return;
+            if (y < topShift) return;
+            if (y > (topShift + foundDimensions)) return;
+            let j = Math.floor((x-leftShift)/BOXDIMENSIONS)
+            let i = Math.floor((y-topShift)/BOXDIMENSIONS)
+            ctx.clearRect(0, 0, leftShift, 40)
+            ctx.fillText((minI+i)+","+(minJ+j), 30, 30);
+        }
+
+        if (exactMidPoint) {
+            
+            const robotAngleFacing = -180 * Math.PI / 180
+            const targetAngle = -123 * Math.PI / 180
+            let vx = Math.cos(robotAngleFacing)
+            let vy = Math.sin(robotAngleFacing)
+
+            let tx = Math.cos(targetAngle)
+            let ty = Math.sin(targetAngle)
+            ctx.strokeStyle = "red"
+            ctx.beginPath();
+            ctx.moveTo(exactMidPoint.x, exactMidPoint.y);
+            let newX = ((vx*100)+exactMidPoint.x)
+            let newY = (vy*100)+exactMidPoint.y
+            ctx.lineTo(newX, newY);
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fillStyle = "red";
+            ctx.fillRect( newX-BOXDIMENSIONS/4, newY-BOXDIMENSIONS/4, BOXDIMENSIONS/2, BOXDIMENSIONS/2 )
+        
+            ctx.strokeStyle = "green"
+            ctx.beginPath();
+            ctx.moveTo(exactMidPoint.x, exactMidPoint.y);
+            let newXt = (tx*100)+exactMidPoint.x
+            let newYt = (ty*100)+exactMidPoint.y
+            ctx.lineTo(newXt, newYt);
+            ctx.stroke();
+            ctx.closePath();
+            ctx.fillStyle = "green";
+            ctx.fillRect( newXt-BOXDIMENSIONS/4, newYt-BOXDIMENSIONS/4, BOXDIMENSIONS/2, BOXDIMENSIONS/2 )
+
+        }
+        
+    
+    </script>
+</body>
+
+
+
+</html>
