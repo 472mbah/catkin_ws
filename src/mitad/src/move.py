@@ -42,16 +42,23 @@ TIMESTEPS = 20
 PATH = []
 PRINTED_DONE = False
 VECTOR_POSITION = [0, 0]
-URL="http://129.12.41.185:9000/"
+LOCAL_URL="http://129.12.41.185:9000/"
+URL="https://turtlebotrender.momodoubah1.repl.co/"
 
-def send (facingAngle=0, targetAngle=0):
+LATEST_YAW = 0
+LATEST_TURNING = 0
+
+
+def send():
     try:
         currP = POSITION
         p_version = approximateCords(currP, BLOCK_SIZE)
-        myobj = {'facingAngle':facingAngle, 'targetAngle':targetAngle, 'blockers':BLOCKERS, 'visits':VISITEDNODES, 'path':PATH, 'robotPosition':p_version}
-        requests.post(URL, json = myobj)    
-        # rospy.loginfo(f"data sent! {VECTOR_POSITION}")
+        myobj = {'facingAngle': LATEST_YAW, 'targetAngle': LATEST_TURNING, 'blockers': BLOCKERS,
+                 'visits': VISITEDNODES, 'path': PATH, 'robotPosition': p_version}
+        requests.post(URL, json=myobj)
+    # rospy.loginfo(f"data sent! {VECTOR_POSITION}")
     except:
+        # rospy.loginfo(f'{x}')
         pass
 
 def convertCordsToBlock(cords, block_size):
@@ -259,15 +266,10 @@ twist.angular.z = 0
 COUNT = 0
 
 while not rospy.is_shutdown():
-    # pass
 
-    #rospy.loginfo(f"Processing {INDEX} {INSTRUCTION_SET}")
-    # if True:
-    #     pass
-        # twist.angular.z = .8
-        # twist.linear.x = .3 
+    send()
 
-    if INDEX==None:
+    if INDEX == None:
         twist.linear.x = .0
         twist.angular.z = 0
     elif INDEX >= len(INSTRUCTION_SET):
@@ -276,6 +278,7 @@ while not rospy.is_shutdown():
             PRINTED_DONE = True
 
     elif INDEX < len(INSTRUCTION_SET):
+
         newPos = POSITION
         blocked_version = approximateCords(newPos, BLOCK_SIZE)
 
@@ -285,29 +288,28 @@ while not rospy.is_shutdown():
         if blocked_version[0] == INSTRUCTION_SET[INDEX]['end'][0] and blocked_version[1] == INSTRUCTION_SET[INDEX]['end'][1]:
             INDEX += 1
         else:
-
-
             incX = INSTRUCTION_SET[INDEX]['relativeEnd']['x'] - POSITION['x']
             incY = INSTRUCTION_SET[INDEX]['relativeEnd']['y'] - POSITION['y']
-            angleToTheGoal = math.atan2(incY, incX)
+            
+            angleToTheGoal = LATEST_TURNING if MODE=='turn' else math.atan2(incY, incX)
             (a, b, yaw) = getEuler(ANGULAR_POSITION)
 
             if abs(angleToTheGoal - yaw) > 1.5:
+                MODE = 'turn'
                 twist.linear.x = 0
                 twist.angular.z = 2
             else:
-                twist.angular.z = 0 
+                MODE = 'move'
+                twist.angular.z = 0
                 twist.linear.x = .3
+            LATEST_YAW = yaw
+            LATEST_TURNING = angleToTheGoal
+            cmdvel_pub.publish(twist)
 
-            if COUNT % 10 == 0:
-                send(yaw, angleToTheGoal)  
-                COUNT = 0
-            COUNT+=1
-        
         PREVIOUS_BLOCKED_VERSION = blocked_version.copy()
-        
+
     cmdvel_pub.publish(twist)
 
-twist.angular.z = 0 
+twist.angular.z = 0
 twist.linear.x = 0
 cmdvel_pub.publish(twist)
